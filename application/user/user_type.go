@@ -1,7 +1,5 @@
 package user
 
-import "github.com/dgrijalva/jwt-go/v4"
-
 type Send_data struct {
 	result bool
 	errStr string
@@ -38,7 +36,7 @@ type InfoUserReq struct {
 	Id string `json:"id"`
 }
 
-type AuthTokenClaims struct {
-	ID                 string `json:"id"` // 유저 ID
-	jwt.StandardClaims        // 표준 토큰 Claims
+type LoginReq struct {
+	Id       string `json:"id"`
+	Password string `json:"password"`
 }

@@ -1,9 +1,11 @@
 package user
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 	"questAPP/database"
+	"questAPP/middleware"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid"
@@ -168,4 +170,54 @@ func Info(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"result": true, "userInfo": user})
+}
+
+func Login(c *gin.Context) {
+	var qid sql.NullString
+	user := User{}
+	reqData := LoginReq{}
+
+	err := c.Bind(&reqData)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Body Parsing Error"})
+		return
+	}
+
+	conn := database.NewMysqlConnection()
+	defer conn.Close()
+
+	rows, err := conn.Query("select * from user where account = ?", reqData.Id)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Query Parsing Error"})
+		return
+	}
+
+	for rows.Next() {
+		err := rows.Scan(&user.Id, &user.Account, &user.Password, &user.Name, &user.TokenBalance, &qid)
+		if err != nil {
+			log.Println(err)
+			c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Parsing Error"})
+			return
+		}
+	}
+
+	if user.Id != "" && (user.Password == reqData.Password) {
+		token := middleware.TokenBuild(user.Id)
+
+		if token == "false" {
+			c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Error Occurred With Creating Token"})
+			return
+		}
+		if qid.Valid {
+			user.QId = ""
+		} else {
+			user.QId = qid.String
+		}
+
+		c.JSON(http.StatusOK, gin.H{"result": true, "userInfo": user, "token": token})
+		return
+	}
+	c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Wrong Password"})
 }

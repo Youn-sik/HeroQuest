@@ -1,4 +1,4 @@
-package user
+package middleware
 
 import (
 	"errors"
@@ -9,14 +9,36 @@ import (
 
 	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/gin-gonic/gin"
+	"github.com/mitchellh/mapstructure"
 )
 
+func TokenAuthenticate(c *gin.Context) {
+	authToken := c.Request.Header.Get("Authorization")
+	authToken = strings.Replace(authToken, "Bearer ", "", 1)
+
+	if authToken == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"result": false, "errStr": "No Token"})
+		c.Abort()
+		return
+	}
+
+	// token 검증 로직
+	isValid := TokenCheck(authToken)
+	if isValid {
+		c.Next()
+	} else {
+		c.JSON(http.StatusUnauthorized, gin.H{"result": false, "errStr": "Expired Token"})
+		c.Abort()
+		return
+	}
+}
+
 // 토큰 발급
-func TokenBuild(u User) string {
+func TokenBuild(id string) string {
 	at := AuthTokenClaims{
-		ID: u.Id,
+		ID: id,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: jwt.At(time.Now().Add(time.Minute * 360)), // 6 hours
+			ExpiresAt: jwt.At(time.Now().Add(time.Minute * 36000)), // 6 hours
 		},
 	}
 
@@ -31,6 +53,7 @@ func TokenBuild(u User) string {
 	return signedAuthToken
 }
 
+/*
 func Auth(c *gin.Context) {
 	var send_data struct {
 		result bool
@@ -59,6 +82,7 @@ func Auth(c *gin.Context) {
 		return
 	}
 }
+*/
 
 func TokenCheck(authToken string) bool {
 	key := func(token *jwt.Token) (interface{}, error) {
@@ -66,7 +90,7 @@ func TokenCheck(authToken string) bool {
 			ErrUnexpectedSigningMethod := errors.New("unexpected signing method")
 			return nil, ErrUnexpectedSigningMethod
 		}
-		return []byte("cho"), nil
+		return []byte("heroquest"), nil
 	}
 
 	user := AuthTokenClaims{}
@@ -79,4 +103,42 @@ func TokenCheck(authToken string) bool {
 	}
 
 	return token.Valid
+}
+
+func ExtractClaims(tokenStr string) (bool, jwt.MapClaims) {
+	hmacSecretString := "heroquest"
+	hmacSecret := []byte(hmacSecretString)
+	authToken := strings.Replace(tokenStr, "Bearer ", "", 1)
+	token, err := jwt.Parse(authToken, func(token *jwt.Token) (interface{}, error) {
+		// check token signing method etc
+		return hmacSecret, nil
+	})
+
+	if err != nil {
+		return false, nil
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return true, claims
+	} else {
+		log.Printf("Invalid JWT Token")
+		return false, nil
+	}
+}
+
+func GetIdFromToken(authToken string) (bool, string, string) {
+	var token struct {
+		Id string
+	}
+
+	flag, value := ExtractClaims(authToken)
+	if !flag {
+		return false, "Token Parsing Error", ""
+	}
+
+	mapstructure.Decode(value, &token)
+	if token.Id == "" {
+		return false, "Token Parsing Error", ""
+	}
+	return true, "", token.Id
 }
