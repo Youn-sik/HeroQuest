@@ -28,15 +28,7 @@ type ModifyUserReq struct {
 	QId          string `json:"qid"`
 }
 
-type DeleteUserReq struct {
-	Id string `json:"id"`
-}
-
-type InfoUserReq struct {
-	Id string `json:"id"`
-}
-
 type LoginReq struct {
-	Id       string `json:"id"`
+	Account  string `json:"account"`
 	Password string `json:"password"`
 }

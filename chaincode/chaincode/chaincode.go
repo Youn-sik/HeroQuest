@@ -16,15 +16,37 @@ type SmartContract struct {
 
 // Asset describes basic details of what makes up a simple asset
 type Quest struct {
-	Id              string `json:"id"`
-	Title           string `json:"title"`
-	Content         string `json:"content"`
-	Deadline        string `json:"deadline"`
-	Creator         string `json:"creator"`
-	TokenAmount     int    `json:"token_amount"`
-	MaxParticipants int    `json:"max_participants"`
-	Status          string `json:"status"`
+	Id              string       `json:"id"`
+	Title           string       `json:"title"`
+	Content         string       `json:"content"`
+	Deadline        string       `json:"deadline"`
+	Creator         string       `json:"creator"`
+	TokenAmount     int          `json:"token_amount"`
+	MaxParticipants int          `json:"max_participants"`
+	Status          string       `json:"status"`
+	Participant     Participant  `json:"participant,omitempty"`
+	Verification    Verification `json:"verification,omitempty"`
 }
+
+type Participant map[string]string
+
+type Verification map[string]VerificationData
+
+type VerificationData struct {
+	Uid    string `json:"uid,omitempty"`
+	Status string `json:"status,omitempty"`
+	Url    string `json:"url,omitempty"`
+}
+
+/*
+추가 내용
+참여자 []string
+검증 []struct {
+	uid stirng
+	status string
+	url string
+}
+*/
 
 /*
 mysql> desc quest;
@@ -82,7 +104,7 @@ func getUUID() string {
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	uuid := getUUID()
 	quests := []Quest{
-		{Id: uuid, Title: "qtitle_value", Content: "qcontent_value", Deadline: "2022-08-28 00:00:00", Creator: "c09863c2-1ef8-11ed-84df-9c5c8ed2592b", TokenAmount: 1000, MaxParticipants: 10, Status: "N"},
+		{Id: uuid, Title: "qtitle_value", Content: "qcontent_value", Deadline: "2022-08-28 00:00:00", Creator: "c09863c2-1ef8-11ed-84df-9c5c8ed2592b", TokenAmount: 1000, MaxParticipants: 10, Status: "W"},
 	}
 
 	for _, quest := range quests {
@@ -129,7 +151,8 @@ func (s *SmartContract) QuestExists(ctx contractapi.TransactionContextInterface,
 	return questJSON != nil, nil
 }
 
-func (s *SmartContract) UpdateQuest(ctx contractapi.TransactionContextInterface, id string, title string, content string, deadline string, creator string, tokenAmount int, maxParticipants int, status string) error {
+func (s *SmartContract) UpdateQuest(ctx contractapi.TransactionContextInterface,
+	id string, title string, content string, deadline string, creator string, tokenAmount int, maxParticipants int, status string, partiParticipant Participant, verification Verification) error {
 	exists, err := s.QuestExists(ctx, id)
 	if err != nil {
 		return err
@@ -148,6 +171,8 @@ func (s *SmartContract) UpdateQuest(ctx contractapi.TransactionContextInterface,
 		TokenAmount:     tokenAmount,
 		MaxParticipants: maxParticipants,
 		Status:          status,
+		Participant:     partiParticipant,
+		Verification:    verification,
 	}
 	questJSON, err := json.Marshal(quest)
 	if err != nil {
@@ -157,17 +182,180 @@ func (s *SmartContract) UpdateQuest(ctx contractapi.TransactionContextInterface,
 	return ctx.GetStub().PutState(id, questJSON)
 }
 
+func (s *SmartContract) AddParticipantQuest(ctx contractapi.TransactionContextInterface, id string, participant string) error {
+	exists, err := s.QuestExists(ctx, id)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("the quest %s does not exist", id)
+	}
+
+	questJSON, err := ctx.GetStub().GetState(id)
+	if err != nil {
+		return fmt.Errorf("failed to read from world state: %v", err)
+	}
+	if questJSON == nil {
+		return fmt.Errorf("the quest %s does not exist", id)
+	}
+
+	var quest Quest
+	err = json.Unmarshal(questJSON, &quest)
+	if err != nil {
+		return err
+	}
+
+	// participant 추가
+	// 현재 퀘스트에 이미 등록되어있는지 확인
+	if quest.Participant[participant] != "" {
+		return fmt.Errorf("%s is already in quest", id)
+	}
+
+	quest.Participant[participant] = participant
+
+	questJSON, err = json.Marshal(quest)
+	if err != nil {
+		return err
+	}
+
+	return ctx.GetStub().PutState(id, questJSON)
+}
+
+func (s *SmartContract) QuitParticipantQuest(ctx contractapi.TransactionContextInterface, id string, participant string) error {
+	exists, err := s.QuestExists(ctx, id)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("the asset %s does not exist", id)
+	}
+
+	questJSON, err := ctx.GetStub().GetState(id)
+	if err != nil {
+		return fmt.Errorf("failed to read from world state: %v", err)
+	}
+	if questJSON == nil {
+		return fmt.Errorf("the asset %s does not exist", id)
+	}
+
+	var quest Quest
+	err = json.Unmarshal(questJSON, &quest)
+	if err != nil {
+		return err
+	}
+
+	// participant 제거
+	if quest.Participant[participant] == "" {
+		return fmt.Errorf("%s is not in quest", id)
+	}
+
+	delete(quest.Participant, participant)
+
+	questJSON, err = json.Marshal(quest)
+	if err != nil {
+		return err
+	}
+
+	return ctx.GetStub().PutState(id, questJSON)
+}
+
+func (s *SmartContract) AddVerificationQuest(ctx contractapi.TransactionContextInterface, id string, uid string, url string) error {
+	exists, err := s.QuestExists(ctx, id)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("the quest %s does not exist", id)
+	}
+
+	questJSON, err := ctx.GetStub().GetState(id)
+	if err != nil {
+		return fmt.Errorf("failed to read from world state: %v", err)
+	}
+	if questJSON == nil {
+		return fmt.Errorf("the quest %s does not exist", id)
+	}
+
+	var quest Quest
+	err = json.Unmarshal(questJSON, &quest)
+	if err != nil {
+		return err
+	}
+
+	// verification 추가
+	// 현재 퀘스트에 이미 등록되어있는지 확인
+	if quest.Verification[uid].Uid != "" {
+		return fmt.Errorf("%s is already in quest verification", id)
+	}
+
+	verification := VerificationData{}
+	verification.Uid = uid
+	verification.Status = "W"
+	verification.Url = url
+
+	quest.Verification[uid] = verification
+
+	questJSON, err = json.Marshal(quest)
+	if err != nil {
+		return err
+	}
+	return ctx.GetStub().PutState(id, questJSON)
+}
+
+func (s *SmartContract) JudgeVerificationQuest(ctx contractapi.TransactionContextInterface, id string, uid string, status string) error {
+	exists, err := s.QuestExists(ctx, id)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("the quest %s does not exist", id)
+	}
+
+	questJSON, err := ctx.GetStub().GetState(id)
+	if err != nil {
+		return fmt.Errorf("failed to read from world state: %v", err)
+	}
+	if questJSON == nil {
+		return fmt.Errorf("the quest %s does not exist", id)
+	}
+
+	var quest Quest
+	err = json.Unmarshal(questJSON, &quest)
+	if err != nil {
+		return err
+	}
+
+	// verification 추가
+	// 현재 퀘스트에 이미 등록되어있는지 확인
+	if quest.Verification[uid].Uid == "" {
+		return fmt.Errorf("%s is not in quest verification", id)
+	}
+
+	verification := VerificationData{}
+	verification.Uid = quest.Verification[uid].Uid
+	verification.Status = status
+	verification.Url = quest.Verification[uid].Url
+
+	quest.Verification[uid] = verification
+
+	questJSON, err = json.Marshal(quest)
+	if err != nil {
+		return err
+	}
+	return ctx.GetStub().PutState(id, questJSON)
+}
+
 func (s *SmartContract) GetQuest(ctx contractapi.TransactionContextInterface, id string) (*Quest, error) {
-	assetJSON, err := ctx.GetStub().GetState(id)
+	questJSON, err := ctx.GetStub().GetState(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from world state: %v", err)
 	}
-	if assetJSON == nil {
+	if questJSON == nil {
 		return nil, fmt.Errorf("the asset %s does not exist", id)
 	}
 
 	var quest Quest
-	err = json.Unmarshal(assetJSON, &quest)
+	err = json.Unmarshal(questJSON, &quest)
 	if err != nil {
 		return nil, err
 	}

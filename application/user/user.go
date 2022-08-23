@@ -84,19 +84,16 @@ func Modify(c *gin.Context) {
 }
 
 func Delete(c *gin.Context) {
-	reqData := DeleteUserReq{}
-
-	err := c.Bind(&reqData)
-	if err != nil {
-		log.Println(err)
-		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Body Parsing Error"})
+	result, errStr, uid := middleware.GetIdFromToken(c.GetHeader("Authorization"))
+	if !result {
+		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": errStr})
 		return
 	}
 
 	conn := database.NewMysqlConnection()
 	defer conn.Close()
 
-	_, err = conn.Query("delete from user where id = ?", reqData.Id)
+	_, err := conn.Query("delete from user where id = ?", uid)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Error"})
@@ -136,19 +133,16 @@ func ListAll(c *gin.Context) {
 
 func Info(c *gin.Context) {
 	user := User{}
-	reqData := InfoUserReq{}
-
-	err := c.Bind(&reqData)
-	if err != nil {
-		log.Println(err)
-		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Body Parsing Error"})
+	result, errStr, uid := middleware.GetIdFromToken(c.GetHeader("Authorization"))
+	if !result {
+		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": errStr})
 		return
 	}
 
 	conn := database.NewMysqlConnection()
 	defer conn.Close()
 
-	rows, err := conn.Query("select * from user where account = ?", reqData.Id)
+	rows, err := conn.Query("select * from user where account = ?", uid)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Error"})
@@ -187,7 +181,7 @@ func Login(c *gin.Context) {
 	conn := database.NewMysqlConnection()
 	defer conn.Close()
 
-	rows, err := conn.Query("select * from user where account = ?", reqData.Id)
+	rows, err := conn.Query("select * from user where account = ?", reqData.Account)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Query Parsing Error"})
