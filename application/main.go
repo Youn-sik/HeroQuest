@@ -6,11 +6,14 @@ import (
 	m "questAPP/middleware"
 	"questAPP/quest"
 	"questAPP/user"
+	"questAPP/sdk"
 
 	"github.com/gin-gonic/gin"
 )
 
 func setupRouter() *gin.Engine {
+	sdk.SDK()
+
 	router := gin.Default()
 	router.Use(m.CORSMiddleware())
 	/*

@@ -34,12 +34,7 @@ func SDK() {
 	}
 
 	ccpPath := filepath.Join(
-		"..",
-		"..",
-		"test-network",
-		"organizations",
-		"peerOrganizations",
-		"org1.example.com",
+		"ccp",
 		"connection-org1.yaml",
 	)
 
@@ -59,8 +54,11 @@ func SDK() {
 		os.Exit(1)
 	}
 
-	contract := network.GetContract("fabcar")
+	contract := network.GetContract("chaincode")
+	fmt.Println(contract)
+	fmt.Println("Contract is successfully connected")
 
+	/*
 	result, err := contract.EvaluateTransaction("queryAllCars")
 	if err != nil {
 		fmt.Printf("Failed to evaluate transaction: %s\n", err)
@@ -94,13 +92,13 @@ func SDK() {
 		os.Exit(1)
 	}
 	fmt.Println(string(result))
+	*/
 }
 
 func populateWallet(wallet *gateway.Wallet) error {
 	credPath := filepath.Join(
 		"..",
-		"..",
-		"test-network",
+		"basic-network-3org-raft",
 		"organizations",
 		"peerOrganizations",
 		"org1.example.com",
@@ -108,8 +106,9 @@ func populateWallet(wallet *gateway.Wallet) error {
 		"User1@org1.example.com",
 		"msp",
 	)
+	// ../../basic-network-3org-raft/organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp
 
-	certPath := filepath.Join(credPath, "signcerts", "cert.pem")
+	certPath := filepath.Join(credPath, "signcerts", "User1@org1.example.com-cert.pem")
 	// read the certificate pem
 	cert, err := ioutil.ReadFile(filepath.Clean(certPath))
 	if err != nil {

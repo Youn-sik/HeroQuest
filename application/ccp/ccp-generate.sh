@@ -56,5 +56,5 @@ CAPORT=11054
 PEERPEM=${NET_DIR_PATH}/organizations/peerOrganizations/org3.example.com/tlsca/tlsca.org3.example.com-cert.pem
 CAPEM=${NET_DIR_PATH}/organizations/peerOrganizations/org3.example.com/ca/ca.org3.example.com-cert.pem
 
-echo "$(json_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > ${DIR}/connection-org2.json
-echo "$(yaml_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > ${DIR}/connection-org2.yaml
+echo "$(json_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > ${DIR}/connection-org3.json
+echo "$(yaml_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > ${DIR}/connection-org3.yaml
