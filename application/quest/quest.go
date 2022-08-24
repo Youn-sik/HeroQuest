@@ -219,11 +219,11 @@ func GetUsers(c *gin.Context) {
 
 // ChainCode SDK
 func GetCreatorVerifyList(c *gin.Context) {
-	result, errStr, uid := middleware.GetIdFromToken(c.GetHeader("Authorization"))
-	if !result {
-		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": errStr})
-		return
-	}
+	// result, errStr, uid := middleware.GetIdFromToken(c.GetHeader("Authorization"))
+	// if !result {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": errStr})
+	// 	return
+	// }
 
 	// SDK 에 uid 값으로 퀘스트 리스트 요청
 	// GetCreatorQuest(uid) 함수 사용
@@ -239,50 +239,50 @@ func GetParticipantVerifyList(c *gin.Context) {
 }
 
 func GetQuestList(c *gin.Context) {
-	var questArr []Quest
+	// var questArr []Quest
 
 	// SDK에 퀘스트 리스트 요청
 	// GetAllQuest() 함수 사용
 }
 
 func GetQuestInfo(c *gin.Context) {
-	reqData := GetQuestInfoReq{}
+	// reqData := GetQuestInfoReq{}
 
 	// SDK qid로 퀘스트 정보 요청
 	// GetQuest() 함수 사용
 }
 
 func CreateQuest(c *gin.Context) {
-	reqData := CreateQuestReq{}
-	result, errStr, uid := middleware.GetIdFromToken(c.GetHeader("Authorization"))
-	if !result {
-		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": errStr})
-		return
-	}
+	// reqData := CreateQuestReq{}
+	// result, errStr, uid := middleware.GetIdFromToken(c.GetHeader("Authorization"))
+	// if !result {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": errStr})
+	// 	return
+	// }
 
 	// SDK uid및 quest property들로 퀘스트 생성 요청
 	// CreateQuest(title, content, deadline, uid(creator), TokenAmount) 함수 사용
 }
 
 func ModifyQuest(c *gin.Context) {
-	reqData := ModifyQuestReq{}
-	result, errStr, uid := middleware.GetIdFromToken(c.GetHeader("Authorization"))
-	if !result {
-		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": errStr})
-		return
-	}
+	// reqData := ModifyQuestReq{}
+	// result, errStr, uid := middleware.GetIdFromToken(c.GetHeader("Authorization"))
+	// if !result {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": errStr})
+	// 	return
+	// }
 
 	// SDK uid및 quest property들로 퀘스트 수정 요청
 	// UpdateQuestInfo(qid, title, content, deadline, tokenAmount)
 }
 
 func DeleteQuest(c *gin.Context) {
-	reqData := DeleteQuestReq{}
-	result, errStr, uid := middleware.GetIdFromToken(c.GetHeader("Authorization"))
-	if !result {
-		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": errStr})
-		return
-	}
+	// reqData := DeleteQuestReq{}
+	// result, errStr, uid := middleware.GetIdFromToken(c.GetHeader("Authorization"))
+	// if !result {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": errStr})
+	// 	return
+	// }
 
 	// SDK qid와 uid로 퀘스트 삭제 요청
 	// DeleteQuest(uid, qid)
