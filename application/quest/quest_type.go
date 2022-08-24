@@ -48,11 +48,11 @@ type CreateQuestReq struct {
 }
 
 type ModifyQuestReq struct {
-	Qid         string `json:"qid"`
-	Title       string `json:"title"`
-	Content     string `json:"content"`
-	Deadline    string `json:"deadline"`
-	TokenAmount string `json:"token_amount"`
+	Qid         string `json:"qid,omitempty"`
+	Title       string `json:"title,omitempty"`
+	Content     string `json:"content,omitempty"`
+	Deadline    string `json:"deadline,omitempty"`
+	TokenAmount string `json:"token_amount,omitempty"`
 }
 
 type DeleteQuestReq struct {

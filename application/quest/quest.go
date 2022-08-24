@@ -226,24 +226,30 @@ func GetCreatorVerifyList(c *gin.Context) {
 	}
 
 	// SDK 에 uid 값으로 퀘스트 리스트 요청
+	// GetCreatorQuest(uid) 함수 사용
 }
 
 // ChainCode SDK
 func GetParticipantVerifyList(c *gin.Context) {
 	// quest := QuestVerification{}
 	// reqData :=
+
+	// SDK 에 uid 값으로 퀘스트 리스트 요청
+	// GetParticipantQuest(uid) 함수 사용
 }
 
 func GetQuestList(c *gin.Context) {
 	var questArr []Quest
 
 	// SDK에 퀘스트 리스트 요청
+	// GetAllQuest() 함수 사용
 }
 
 func GetQuestInfo(c *gin.Context) {
 	reqData := GetQuestInfoReq{}
 
 	// SDK qid로 퀘스트 정보 요청
+	// GetQuest() 함수 사용
 }
 
 func CreateQuest(c *gin.Context) {
@@ -255,6 +261,7 @@ func CreateQuest(c *gin.Context) {
 	}
 
 	// SDK uid및 quest property들로 퀘스트 생성 요청
+	// CreateQuest(title, content, deadline, uid(creator), TokenAmount) 함수 사용
 }
 
 func ModifyQuest(c *gin.Context) {
@@ -266,6 +273,7 @@ func ModifyQuest(c *gin.Context) {
 	}
 
 	// SDK uid및 quest property들로 퀘스트 수정 요청
+	// UpdateQuestInfo(qid, title, content, deadline, tokenAmount)
 }
 
 func DeleteQuest(c *gin.Context) {
@@ -277,4 +285,5 @@ func DeleteQuest(c *gin.Context) {
 	}
 
 	// SDK qid와 uid로 퀘스트 삭제 요청
+	// DeleteQuest(uid, qid)
 }

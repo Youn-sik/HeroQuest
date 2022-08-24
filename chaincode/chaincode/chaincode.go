@@ -104,7 +104,7 @@ func getUUID() string {
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	uuid := getUUID()
 	quests := []Quest{
-		{Id: uuid, Title: "qtitle_value", Content: "qcontent_value", Deadline: "2022-08-28 00:00:00", Creator: "c09863c2-1ef8-11ed-84df-9c5c8ed2592b", TokenAmount: 1000, MaxParticipants: 10, Status: "W"},
+		{Id: uuid, Title: "Genesis_Quest", Content: "Genesis_Content", Deadline: "2100-12-31 00:00:00", Creator: "c09863c2-1ef8-11ed-84df-9c5c8ed2592b", TokenAmount: 10000, MaxParticipants: 10, Status: "W"},
 	}
 
 	for _, quest := range quests {
@@ -175,6 +175,95 @@ func (s *SmartContract) UpdateQuest(ctx contractapi.TransactionContextInterface,
 		Verification:    verification,
 	}
 	questJSON, err := json.Marshal(quest)
+	if err != nil {
+		return err
+	}
+
+	return ctx.GetStub().PutState(id, questJSON)
+}
+
+func (s *SmartContract) UpdateQuestInfo(ctx contractapi.TransactionContextInterface,
+	id string, title string, content string, deadline string, creator string, tokenAmount int, maxParticipants int, status string) error {
+
+	questJSON, err := ctx.GetStub().GetState(id)
+	if err != nil {
+		return fmt.Errorf("failed to read from world state: %v", err)
+	}
+	if questJSON == nil {
+		return fmt.Errorf("the asset %s does not exist", id)
+	}
+
+	var quest Quest
+	err = json.Unmarshal(questJSON, &quest)
+	if err != nil {
+		return err
+	}
+
+	var titleArg string
+	var contentArg string
+	var deadlineArg string
+	var creatorArg string
+	var tokenAmountArg int
+	var maxParticipantsArg int
+	var statusArg string
+
+	if title == "" {
+		titleArg = quest.Title
+	} else {
+		titleArg = title
+	}
+
+	if content == "" {
+		contentArg = quest.Content
+	} else {
+		contentArg = content
+	}
+
+	if deadline == "" {
+		deadlineArg = quest.Deadline
+	} else {
+		deadlineArg = deadline
+	}
+
+	if creator == "" {
+		creatorArg = quest.Creator
+	} else {
+		creatorArg = creator
+	}
+
+	if tokenAmount == 0 {
+		tokenAmountArg = quest.TokenAmount
+	} else {
+		tokenAmountArg = tokenAmount
+	}
+
+	if maxParticipants == 0 {
+		maxParticipantsArg = quest.MaxParticipants
+	} else {
+		maxParticipantsArg = maxParticipants
+	}
+
+	if status == "" {
+		statusArg = quest.Status
+	} else {
+		statusArg = status
+	}
+
+	// overwriting original asset with new asset
+	questModified := Quest{
+		Id:              id,
+		Title:           titleArg,
+		Content:         contentArg,
+		Deadline:        deadlineArg,
+		Creator:         creatorArg,
+		TokenAmount:     tokenAmountArg,
+		MaxParticipants: maxParticipantsArg,
+		Status:          statusArg,
+		Participant:     quest.Participant,
+		Verification:    quest.Verification,
+	}
+
+	questJSON, err = json.Marshal(questModified)
 	if err != nil {
 		return err
 	}
@@ -363,6 +452,68 @@ func (s *SmartContract) GetQuest(ctx contractapi.TransactionContextInterface, id
 	return &quest, nil
 }
 
+func (s *SmartContract) GetCreatorQuest(ctx contractapi.TransactionContextInterface, uid string) ([]*Quest, error) {
+	// range query with empty string for startKey and endKey does an
+	// open-ended query of all assets in the chaincode namespace.
+	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
+	if err != nil {
+		return nil, err
+	}
+	defer resultsIterator.Close()
+
+	var quests []*Quest
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		var quest Quest
+		err = json.Unmarshal(queryResponse.Value, &quest)
+		if err != nil {
+			return nil, err
+		}
+
+		// creator == uid 인 퀘스트만 append 하기
+		if quest.Creator == uid {
+			quests = append(quests, &quest)
+		}
+	}
+
+	return quests, nil
+}
+
+func (s *SmartContract) GetParticipantQuest(ctx contractapi.TransactionContextInterface, uid string) ([]*Quest, error) {
+	// range query with empty string for startKey and endKey does an
+	// open-ended query of all assets in the chaincode namespace.
+	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
+	if err != nil {
+		return nil, err
+	}
+	defer resultsIterator.Close()
+
+	var quests []*Quest
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		var quest Quest
+		err = json.Unmarshal(queryResponse.Value, &quest)
+		if err != nil {
+			return nil, err
+		}
+
+		// participant[uid] 이 존재하는 경우만 append 하기
+		if quest.Participant[uid] != "" {
+			quests = append(quests, &quest)
+		}
+	}
+
+	return quests, nil
+}
+
 func (s *SmartContract) GetAllQuest(ctx contractapi.TransactionContextInterface) ([]*Quest, error) {
 	// range query with empty string for startKey and endKey does an
 	// open-ended query of all assets in the chaincode namespace.
@@ -390,16 +541,26 @@ func (s *SmartContract) GetAllQuest(ctx contractapi.TransactionContextInterface)
 	return quests, nil
 }
 
-func (s *SmartContract) DeleteQuest(ctx contractapi.TransactionContextInterface, id string) error {
-	exists, err := s.QuestExists(ctx, id)
+func (s *SmartContract) DeleteQuest(ctx contractapi.TransactionContextInterface, uid string, qid string) error {
+	questJSON, err := ctx.GetStub().GetState(qid)
+	if err != nil {
+		return fmt.Errorf("failed to read from world state: %v", err)
+	}
+	if questJSON == nil {
+		return fmt.Errorf("the asset %s does not exist", qid)
+	}
+
+	var quest Quest
+	err = json.Unmarshal(questJSON, &quest)
 	if err != nil {
 		return err
 	}
-	if !exists {
-		return fmt.Errorf("the asset %s does not exist", id)
+
+	if quest.Creator != uid {
+		return fmt.Errorf("this asset is not belongs to %s", uid)
 	}
 
-	return ctx.GetStub().DelState(id)
+	return ctx.GetStub().DelState(qid)
 }
 
 /*
