@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
-	"questAPP/database"
+	con "questAPP/connection"
 	"questAPP/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -45,8 +45,7 @@ func Create(c *gin.Context) {
 		return
 	}
 
-	conn := database.NewMysqlConnection()
-	defer conn.Close()
+	conn := con.GetMysqlClient()
 
 	_, err = conn.Query("insert into user (id, account, password, name) "+
 		"value (?,?,?,?)", getUUID(), reqData.Account, reqData.Password, reqData.Name)
@@ -69,8 +68,7 @@ func Modify(c *gin.Context) {
 		return
 	}
 
-	conn := database.NewMysqlConnection()
-	defer conn.Close()
+	conn := con.GetMysqlClient()
 
 	_, err = conn.Query("update user set account = ?, password = ?, name = ?, token_balance = ?, qid = ?",
 		reqData.Account, reqData.Password, reqData.Name, reqData.TokenBalance, reqData.QId)
@@ -90,8 +88,7 @@ func Delete(c *gin.Context) {
 		return
 	}
 
-	conn := database.NewMysqlConnection()
-	defer conn.Close()
+	conn := con.GetMysqlClient()
 
 	_, err := conn.Query("delete from user where id = ?", uid)
 	if err != nil {
@@ -106,8 +103,7 @@ func Delete(c *gin.Context) {
 func ListAll(c *gin.Context) {
 	var userArr []User
 
-	conn := database.NewMysqlConnection()
-	defer conn.Close()
+	conn := con.GetMysqlClient()
 
 	rows, err := conn.Query("select * from user")
 	if err != nil {
@@ -139,8 +135,7 @@ func Info(c *gin.Context) {
 		return
 	}
 
-	conn := database.NewMysqlConnection()
-	defer conn.Close()
+	conn := con.GetMysqlClient()
 
 	rows, err := conn.Query("select * from user where account = ?", uid)
 	if err != nil {
@@ -178,8 +173,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	conn := database.NewMysqlConnection()
-	defer conn.Close()
+	conn := con.GetMysqlClient()
 
 	rows, err := conn.Query("select * from user where account = ?", reqData.Account)
 	if err != nil {

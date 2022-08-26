@@ -1,18 +1,22 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 
+	con "questAPP/connection"
 	m "questAPP/middleware"
 	"questAPP/quest"
 	"questAPP/user"
-	"questAPP/sdk"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
 )
 
+var mysql *sql.DB
+var contract *gateway.Contract
+
 func setupRouter() *gin.Engine {
-	sdk.SDK()
 
 	router := gin.Default()
 	router.Use(m.CORSMiddleware())
@@ -92,6 +96,10 @@ func setupRouter() *gin.Engine {
 
 func main() {
 	port := ":3000"
+
+	mysql = con.GetMysqlClient()
+	contract = con.GetContractClient()
+	defer mysql.Close()
 
 	router := setupRouter()
 	log.Println("[SERVER] => Backend Admin application is listening on port " + port)

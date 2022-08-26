@@ -17,19 +17,21 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
 )
 
-func SDK() {
+func GetConnection() (error, *gateway.Contract) {
 	os.Setenv("DISCOVERY_AS_LOCALHOST", "true")
 	wallet, err := gateway.NewFileSystemWallet("wallet")
 	if err != nil {
 		fmt.Printf("Failed to create wallet: %s\n", err)
-		os.Exit(1)
+		// os.Exit(1)
+		return err, nil
 	}
 
 	if !wallet.Exists("appUser") {
 		err = populateWallet(wallet)
 		if err != nil {
 			fmt.Printf("Failed to populate wallet contents: %s\n", err)
-			os.Exit(1)
+			// os.Exit(1)
+			return err, nil
 		}
 	}
 
@@ -44,54 +46,58 @@ func SDK() {
 	)
 	if err != nil {
 		fmt.Printf("Failed to connect to gateway: %s\n", err)
-		os.Exit(1)
+		// os.Exit(1)
+		return err, nil
 	}
 	defer gw.Close()
 
 	network, err := gw.GetNetwork("mychannel")
 	if err != nil {
 		fmt.Printf("Failed to get network: %s\n", err)
-		os.Exit(1)
+		// os.Exit(1)
+		return err, nil
 	}
 
 	contract := network.GetContract("chaincode")
 	fmt.Println(contract)
 	fmt.Println("Contract is successfully connected")
 
+	return nil, contract
+
 	/*
-	result, err := contract.EvaluateTransaction("queryAllCars")
-	if err != nil {
-		fmt.Printf("Failed to evaluate transaction: %s\n", err)
-		os.Exit(1)
-	}
-	fmt.Println(string(result))
+		result, err := contract.EvaluateTransaction("queryAllCars")
+		if err != nil {
+			fmt.Printf("Failed to evaluate transaction: %s\n", err)
+			os.Exit(1)
+		}
+		fmt.Println(string(result))
 
-	result, err = contract.SubmitTransaction("createCar", "CAR10", "VW", "Polo", "Grey", "Mary")
-	if err != nil {
-		fmt.Printf("Failed to submit transaction: %s\n", err)
-		os.Exit(1)
-	}
-	fmt.Println(string(result))
+		result, err = contract.SubmitTransaction("createCar", "CAR10", "VW", "Polo", "Grey", "Mary")
+		if err != nil {
+			fmt.Printf("Failed to submit transaction: %s\n", err)
+			os.Exit(1)
+		}
+		fmt.Println(string(result))
 
-	result, err = contract.EvaluateTransaction("queryCar", "CAR10")
-	if err != nil {
-		fmt.Printf("Failed to evaluate transaction: %s\n", err)
-		os.Exit(1)
-	}
-	fmt.Println(string(result))
+		result, err = contract.EvaluateTransaction("queryCar", "CAR10")
+		if err != nil {
+			fmt.Printf("Failed to evaluate transaction: %s\n", err)
+			os.Exit(1)
+		}
+		fmt.Println(string(result))
 
-	_, err = contract.SubmitTransaction("changeCarOwner", "CAR10", "Archie")
-	if err != nil {
-		fmt.Printf("Failed to submit transaction: %s\n", err)
-		os.Exit(1)
-	}
+		_, err = contract.SubmitTransaction("changeCarOwner", "CAR10", "Archie")
+		if err != nil {
+			fmt.Printf("Failed to submit transaction: %s\n", err)
+			os.Exit(1)
+		}
 
-	result, err = contract.EvaluateTransaction("queryCar", "CAR10")
-	if err != nil {
-		fmt.Printf("Failed to evaluate transaction: %s\n", err)
-		os.Exit(1)
-	}
-	fmt.Println(string(result))
+		result, err = contract.EvaluateTransaction("queryCar", "CAR10")
+		if err != nil {
+			fmt.Printf("Failed to evaluate transaction: %s\n", err)
+			os.Exit(1)
+		}
+		fmt.Println(string(result))
 	*/
 }
 
