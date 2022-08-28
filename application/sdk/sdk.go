@@ -58,7 +58,7 @@ func GetConnection() (error, *gateway.Contract) {
 		return err, nil
 	}
 
-	contract := network.GetContract("chaincode")
+	contract := network.GetContract("basic")
 	fmt.Println(contract)
 	fmt.Println("Contract is successfully connected")
 
