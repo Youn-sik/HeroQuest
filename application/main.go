@@ -54,6 +54,9 @@ func setupRouter() *gin.Engine {
 
 	questRouter := router.Group("/quest")
 	questRouter.Use(m.TokenAuthenticate)
+	questRouter.GET("/list", func(c *gin.Context) {
+		quest.GetQuestList(c)
+	})
 	questRouter.POST("/join", func(c *gin.Context) {
 		quest.Join(c)
 	})
@@ -98,7 +101,6 @@ func main() {
 	port := ":3000"
 
 	mysql = con.GetMysqlClient()
-	contract = con.GetContractClient()
 	defer mysql.Close()
 
 	router := setupRouter()
