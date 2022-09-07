@@ -54,6 +54,10 @@ func setupRouter() *gin.Engine {
 
 	questRouter := router.Group("/quest")
 	questRouter.Use(m.TokenAuthenticate)
+	// questInfo, questCreate, questModify, questDelete 함수 구현 되어있음.
+	questRouter.GET("/list", func(c *gin.Context) {
+		quest.GetQuestList(c)
+	})
 	questRouter.POST("/join", func(c *gin.Context) {
 		quest.Join(c)
 	})
@@ -98,7 +102,6 @@ func main() {
 	port := ":3000"
 
 	mysql = con.GetMysqlClient()
-	contract = con.GetContractClient()
 	defer mysql.Close()
 
 	router := setupRouter()

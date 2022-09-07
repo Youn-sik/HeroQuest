@@ -60,18 +60,26 @@ func Create(c *gin.Context) {
 
 func Modify(c *gin.Context) {
 	reqData := ModifyUserReq{}
+	result, errStr, uid := middleware.GetIdFromToken(c.GetHeader("Authorization"))
+	if !result {
+		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": errStr})
+		return
+	}
 
 	err := c.Bind(&reqData)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Body Parsing Error"})
 		return
+	} else if reqData.Account == "" || reqData.Name == "" || reqData.Password == "" || reqData.QId == "" || reqData.TokenBalance == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Wrong Body Form"})
+		return
 	}
 
 	conn := con.GetMysqlClient()
 
-	_, err = conn.Query("update user set account = ?, password = ?, name = ?, token_balance = ?, qid = ?",
-		reqData.Account, reqData.Password, reqData.Name, reqData.TokenBalance, reqData.QId)
+	_, err = conn.Query("update user set account = ?, password = ?, name = ?, token_balance = ?, qid = ? where id = ?",
+		reqData.Account, reqData.Password, reqData.Name, reqData.TokenBalance, reqData.QId, uid)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Error"})
@@ -115,7 +123,7 @@ func ListAll(c *gin.Context) {
 	for rows.Next() {
 		user := User{}
 
-		err := rows.Scan(&user)
+		err := rows.Scan(&user.Id, &user.Account, &user.Password, &user.Name, &user.TokenBalance, &user.QId)
 		if err != nil {
 			log.Println(err)
 			c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Parsing Error"})
@@ -137,7 +145,7 @@ func Info(c *gin.Context) {
 
 	conn := con.GetMysqlClient()
 
-	rows, err := conn.Query("select * from user where account = ?", uid)
+	rows, err := conn.Query("select * from user where id = ?", uid)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Error"})
@@ -145,7 +153,7 @@ func Info(c *gin.Context) {
 	}
 
 	for rows.Next() {
-		err := rows.Scan(&user)
+		err := rows.Scan(&user.Id, &user.Account, &user.Password, &user.Name, &user.TokenBalance, &user.QId)
 		if err != nil {
 			log.Println(err)
 			c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Parsing Error"})

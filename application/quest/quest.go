@@ -59,7 +59,7 @@ func Join(c *gin.Context) {
 
 	conn := con.GetMysqlClient()
 
-	_, err = conn.Query("update user set qid = ? where uid = ?", reqData.Qid, uid)
+	_, err = conn.Query("update user set qid = ? where id = ?", reqData.Qid, uid)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Error"})
@@ -96,27 +96,28 @@ func Quit(c *gin.Context) {
 
 	conn := con.GetMysqlClient()
 
-	_, err = conn.Query("update user set qid = ? where uid = ? and qid = ?", nil, uid, reqData.Qid)
+	// qid default value is ""
+	_, err = conn.Query("update user set qid = ? where id = ? and qid = ?", "", uid, reqData.Qid)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Error"})
 		return
 	}
 
-	rows, err := conn.Query("select * from quest_verification where uid = ? and qid = ?", uid, reqData.Qid)
-	if err != nil {
-		log.Println(err)
-		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Error"})
-		return
-	}
-	if rows != nil {
-		conn.Query("update quest_verification set status = ? where uid = ? qid = ?", reqData.Status, uid, reqData.Qid)
-		if err != nil {
-			log.Println(err)
-			c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Error"})
-			return
-		}
-	}
+	// rows, err := conn.Query("select * from quest_verification where uid = ? and qid = ?", uid, reqData.Qid)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Error"})
+	// 	return
+	// }
+	// if rows != nil {
+	// 	conn.Query("update quest_verification set status = ? where uid = ? qid = ?", reqData.Status, uid, reqData.Qid)
+	// 	if err != nil {
+	// 		log.Println(err)
+	// 		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Error"})
+	// 		return
+	// 	}
+	// }
 
 	// SDK에 qid 값으로 quest 내용 select 후 참여자 정보 삭제
 	// QuitParticipantQuest(qid, uid) 함수 사용
@@ -150,14 +151,14 @@ func Verify(c *gin.Context) {
 		return
 	}
 
-	conn := con.GetMysqlClient()
+	// conn := con.GetMysqlClient()
 
-	_, err = conn.Query("insert into quest_verification values(?,?,?,?,?)", getUUID(), reqData.Qid, uid, "W", reqData.Url)
-	if err != nil {
-		log.Println(err)
-		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Error"})
-		return
-	}
+	// _, err = conn.Query("insert into quest_verification values(?,?,?,?,?)", getUUID(), reqData.Qid, uid, "W", reqData.Url)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Error"})
+	// 	return
+	// }
 
 	// SDK에 qid 값으로 quest 내용 select 후 검증자 정보 추가 (url 및 uid 값 등록)
 	// AddVerificationQuest(qid, uid, url) 함수 사용
@@ -168,17 +169,17 @@ func Verify(c *gin.Context) {
 	}
 	log.Println(string(contractResult))
 
-	c.JSON(http.StatusBadRequest, gin.H{"result": true})
+	c.JSON(http.StatusOK, gin.H{"result": true})
 }
 
 // ChainCode SDK
 func Judge(c *gin.Context) {
 	reqData := JudgeQuestReq{}
-	result, errStr, uid := middleware.GetIdFromToken(c.GetHeader("Authorization"))
-	if !result {
-		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": errStr})
-		return
-	}
+	// result, errStr, uid := middleware.GetIdFromToken(c.GetHeader("Authorization"))
+	// if !result {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": errStr})
+	// 	return
+	// }
 
 	err := c.Bind(&reqData)
 	if err != nil {
@@ -187,25 +188,27 @@ func Judge(c *gin.Context) {
 		return
 	}
 
-	conn := con.GetMysqlClient()
+	// conn := con.GetMysqlClient()
 
-	_, err = conn.Query("update quest_verification set status = ? where uid = ? qid = ?", reqData.Status, uid, reqData.Qid)
-	if err != nil {
-		log.Println(err)
-		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Error"})
-		return
-	}
+	// _, err = conn.Query("update quest_verification set status = ? where uid = ? qid = ?", reqData.Status, uid, reqData.Qid)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Error"})
+	// 	return
+	// }
 
 	// SDK에 qid 값으로 quest 내용 select 후 검증자 정보 추가 (status 업데이트)
 	// JudgeVerificationQuest(qid, uid, status) 함수 사용
+
+	// uid 값이 본인이 아니라 검증 받을 대상의 uid 가 들어가야 한다.
 	contract := con.GetContractClient()
-	contractResult, err := contract.SubmitTransaction("JudgeVerificationQuest", reqData.Qid, uid, reqData.Status)
+	contractResult, err := contract.SubmitTransaction("JudgeVerificationQuest", reqData.Qid, reqData.Uid, reqData.Status)
 	if err != nil {
 		log.Printf("Failed to evaluate transaction: %s\n", err)
 	}
 	log.Println(string(contractResult))
 
-	c.JSON(http.StatusBadRequest, gin.H{"result": true})
+	c.JSON(http.StatusOK, gin.H{"result": true})
 }
 
 func GetUsers(c *gin.Context) {
@@ -214,7 +217,7 @@ func GetUsers(c *gin.Context) {
 
 	conn := con.GetMysqlClient()
 
-	rows, err := conn.Query("select * from user where qid = ?", qid)
+	rows, err := conn.Query("select id, name from user where qid = ?", qid)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Error"})
@@ -224,7 +227,7 @@ func GetUsers(c *gin.Context) {
 	for rows.Next() {
 		user := QuestUser{}
 
-		err := rows.Scan(&user)
+		err := rows.Scan(&user.Id, &user.Name)
 		if err != nil {
 			log.Println(err)
 			c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Parsing Error"})

@@ -1,1 +1,7 @@
 _basic*
+
+application/ccp/connection-org*
+
+basic-network-3org-raft/system-genesis-block/genesis.block
+
+basic-network-3org-raft/channel-artifacts

@@ -18,6 +18,7 @@ import (
 )
 
 func GetConnection() (error, *gateway.Contract) {
+	fmt.Println(os.Getwd())
 	os.Setenv("DISCOVERY_AS_LOCALHOST", "true")
 	wallet, err := gateway.NewFileSystemWallet("wallet")
 	if err != nil {
@@ -58,7 +59,7 @@ func GetConnection() (error, *gateway.Contract) {
 		return err, nil
 	}
 
-	contract := network.GetContract("chaincode")
+	contract := network.GetContract("basic")
 	fmt.Println(contract)
 	fmt.Println("Contract is successfully connected")
 

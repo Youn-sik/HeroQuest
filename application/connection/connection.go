@@ -18,16 +18,15 @@ func init() {
 	if err != nil {
 		log.Println("Fail to create connection of mysql", err)
 	}
-
-	err, contract = sdk.GetConnection()
-	if err != nil {
-		log.Println("Fail to create connection of contract", err)
-	}
 }
 
 func GetMysqlClient() *sql.DB {
 	return mysql
 }
 func GetContractClient() *gateway.Contract {
+	err, contract := sdk.GetConnection()
+	if err != nil {
+		log.Println("Fail to create connection of contract", err)
+	}
 	return contract
 }

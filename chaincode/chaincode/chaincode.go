@@ -102,9 +102,30 @@ func getUUID() string {
 
 // InitLedger adds a base set of quest to the ledger
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
-	uuid := getUUID()
+	// uuid := getUUID()
+	var tmpVerificationData VerificationData
+	tmpMapParticipant := make(map[string]string)
+	tmpMapVerification := make(map[string]VerificationData)
+
+	uuid := "TEST-uuid"
+	tmpVerificationData.Uid = "TEST"
+	tmpVerificationData.Status = "TEST"
+	tmpVerificationData.Url = "TEST"
+	tmpMapParticipant["TEST"] = "TEST"
+	tmpMapVerification["TEST"] = tmpVerificationData
 	quests := []Quest{
-		{Id: uuid, Title: "Genesis_Quest", Content: "Genesis_Content", Deadline: "2100-12-31 00:00:00", Creator: "c09863c2-1ef8-11ed-84df-9c5c8ed2592b", TokenAmount: 10000, MaxParticipants: 10, Status: "W"},
+		{
+			Id: uuid, 
+			Title: "Genesis_Quest", 
+			Content: "Genesis_Content", 
+			Deadline: "2100-12-31 00:00:00", 
+			Creator: "c09863c2-1ef8-11ed-84df-9c5c8ed2592b", 
+			TokenAmount: 10000, 
+			MaxParticipants: 10, 
+			Status: "W",
+			Participant: tmpMapParticipant,
+			Verification: tmpMapVerification,
+		},
 	}
 
 	for _, quest := range quests {
@@ -356,6 +377,7 @@ func (s *SmartContract) AddVerificationQuest(ctx contractapi.TransactionContextI
 	if !exists {
 		return fmt.Errorf("the quest %s does not exist", id)
 	}
+	// 해당 퀘스트 존재 여부 및 해당 유저가 participant 인지 확인 필요에 관한 에러 처리 필요.
 
 	questJSON, err := ctx.GetStub().GetState(id)
 	if err != nil {
@@ -417,7 +439,7 @@ func (s *SmartContract) JudgeVerificationQuest(ctx contractapi.TransactionContex
 	// verification 추가
 	// 현재 퀘스트에 이미 등록되어있는지 확인
 	if quest.Verification[uid].Uid == "" {
-		return fmt.Errorf("%s is not in quest verification", id)
+		return fmt.Errorf("%s is not in quest verification", uid)
 	}
 
 	verification := VerificationData{}

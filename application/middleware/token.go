@@ -4,7 +4,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go/v4"
@@ -14,7 +13,6 @@ import (
 
 func TokenAuthenticate(c *gin.Context) {
 	authToken := c.Request.Header.Get("Authorization")
-	authToken = strings.Replace(authToken, "Bearer ", "", 1)
 
 	if authToken == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"result": false, "errStr": "No Token"})
@@ -106,15 +104,15 @@ func TokenCheck(authToken string) bool {
 }
 
 func ExtractClaims(tokenStr string) (bool, jwt.MapClaims) {
-	hmacSecretString := "heroquest"
-	hmacSecret := []byte(hmacSecretString)
-	authToken := strings.Replace(tokenStr, "Bearer ", "", 1)
+	hmacSecret := []byte("heroquest")
+	authToken := tokenStr
 	token, err := jwt.Parse(authToken, func(token *jwt.Token) (interface{}, error) {
 		// check token signing method etc
 		return hmacSecret, nil
 	})
 
 	if err != nil {
+		log.Println(err)
 		return false, nil
 	}
 
@@ -122,6 +120,7 @@ func ExtractClaims(tokenStr string) (bool, jwt.MapClaims) {
 		return true, claims
 	} else {
 		log.Printf("Invalid JWT Token")
+		log.Println(err)
 		return false, nil
 	}
 }
@@ -133,12 +132,12 @@ func GetIdFromToken(authToken string) (bool, string, string) {
 
 	flag, value := ExtractClaims(authToken)
 	if !flag {
-		return false, "Token Parsing Error", ""
+		return false, "Token Parsing Error1", ""
 	}
 
 	mapstructure.Decode(value, &token)
 	if token.Id == "" {
-		return false, "Token Parsing Error", ""
+		return false, "Token Parsing Error2", ""
 	}
 	return true, "", token.Id
 }

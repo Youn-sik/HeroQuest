@@ -14,7 +14,6 @@ type JoinQuestReq struct {
 
 type QuitQuestReq struct {
 	Qid    string `json:"qid"`
-	Status string `json:"status"`
 }
 
 type VerifyQuestReq struct {
@@ -24,6 +23,7 @@ type VerifyQuestReq struct {
 
 type JudgeQuestReq struct {
 	Qid    string `json:"qid"`
+	Uid    string `json:"uid"`
 	Status string `json:"status"`
 }
 
