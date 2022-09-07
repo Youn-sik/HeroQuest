@@ -24,7 +24,7 @@ CC_NAME="basic"
 #밑의 체인코드dir 에는 go 파일이 한개만 있어야 한다.
 CC_SRC_PATH="../chaincode"
 CC_RUNTIME_LANGUAGE="golang"
-CC_VERSION="4"
+CC_VERSION="2"
 CHANNEL_NAME="mychannel"
 
 
