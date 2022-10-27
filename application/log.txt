@@ -1,0 +1,1 @@
+[31m2022-09-07 14:49:50.702 UTC [main] InitCmd -> ERRO 001[0m Fatal error when initializing core config : FABRIC_CFG_PATH /home/bstudent/dev/quest/application/config does not exist

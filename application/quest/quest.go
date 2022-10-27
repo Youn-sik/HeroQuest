@@ -13,6 +13,7 @@ package quest
 */
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	con "questAPP/connection"
@@ -284,7 +285,7 @@ func GetParticipantVerifyList(c *gin.Context) {
 }
 
 func GetQuestList(c *gin.Context) {
-	// var questArr []Quest
+	var questArr []Quest
 
 	// SDK에 퀘스트 리스트 요청
 	// GetAllQuest() 함수 사용
@@ -295,12 +296,16 @@ func GetQuestList(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": err})
 		return
 	}
-	log.Println(string(contractResult))
+	
+	json.Unmarshal(contractResult, &questArr)
+	log.Printf("%+v\n", questArr)
 
-	c.JSON(http.StatusOK, gin.H{"result": true, "quest": string(contractResult)})
+	c.JSON(http.StatusOK, gin.H{"result": true, "quest": questArr})
 }
 
 func GetQuestInfo(c *gin.Context) {
+	var quest Quest
+
 	reqData := GetQuestInfoReq{}
 	err := c.Bind(&reqData)
 	if err != nil {
@@ -318,11 +323,14 @@ func GetQuestInfo(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": err})
 		return
 	}
-	log.Println(string(contractResult))
 
-	c.JSON(http.StatusOK, gin.H{"result": true, "quest": string(contractResult)})
+	json.Unmarshal(contractResult, &quest)
+	log.Printf("%+v\n", quest)
+
+	c.JSON(http.StatusOK, gin.H{"result": true, "quest": quest})
 }
 
+// participant, verification 부분의 nil 값으로 인해 동작 불능
 func CreateQuest(c *gin.Context) {
 	reqData := CreateQuestReq{}
 	result, errStr, uid := middleware.GetIdFromToken(c.GetHeader("Authorization"))
@@ -345,6 +353,7 @@ func CreateQuest(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"result": true})
 }
 
+// participant, verification 부분의 nil 값으로 인해 동작 불능
 func ModifyQuest(c *gin.Context) {
 	reqData := ModifyQuestReq{}
 	result, errStr, uid := middleware.GetIdFromToken(c.GetHeader("Authorization"))
@@ -372,6 +381,13 @@ func DeleteQuest(c *gin.Context) {
 	result, errStr, uid := middleware.GetIdFromToken(c.GetHeader("Authorization"))
 	if !result {
 		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": errStr})
+		return
+	}
+
+	err := c.Bind(&reqData)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Body Parsing Error"})
 		return
 	}
 

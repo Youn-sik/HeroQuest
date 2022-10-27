@@ -54,9 +54,11 @@ func setupRouter() *gin.Engine {
 
 	questRouter := router.Group("/quest")
 	questRouter.Use(m.TokenAuthenticate)
-	// questInfo, questCreate, questModify, questDelete 함수 구현 되어있음.
 	questRouter.GET("/list", func(c *gin.Context) {
 		quest.GetQuestList(c)
+	})
+	questRouter.POST("/info", func(c *gin.Context) {
+		quest.GetQuestInfo(c)
 	})
 	questRouter.POST("/join", func(c *gin.Context) {
 		quest.Join(c)
@@ -79,6 +81,15 @@ func setupRouter() *gin.Engine {
 	questRouter.GET("/verify/list/participant", func(c *gin.Context) {
 		quest.GetParticipantVerifyList(c)
 	}) // 참여자: 본인이 검증받을(mysql) or 검증받은(block-chain) 퀘스트 리스트
+	questRouter.POST("/create", func(c *gin.Context) {
+		quest.CreateQuest(c)
+	})
+	questRouter.POST("/modify", func(c *gin.Context) {
+		quest.ModifyQuest(c)
+	})
+	questRouter.POST("/delete", func(c *gin.Context) {
+		quest.DeleteQuest(c)
+	})
 
 	/*
 		2. 퀘스트에 참여한 사용자 리스트 조회 함수

@@ -43,9 +43,32 @@ func Create(c *gin.Context) {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Body Parsing Error"})
 		return
+	} else if reqData.Account == "" || reqData.Password == "" || reqData.Name == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Wrong Body Form"})
+		return
 	}
 
 	conn := con.GetMysqlClient()
+
+	rows, err := conn.Query("select id from user where account = ?", reqData.Account)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Error"})
+		return
+	}
+	for rows.Next() {
+		var uid string
+		err = rows.Scan(&uid)
+		if err != nil {
+			log.Println(err)
+			c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Database Query Parsing Error"})
+			return
+		}
+		if uid != "" {
+			c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Account is already exsist"})
+			return
+		}
+	}
 
 	_, err = conn.Query("insert into user (id, account, password, name) "+
 		"value (?,?,?,?)", getUUID(), reqData.Account, reqData.Password, reqData.Name)
@@ -215,5 +238,5 @@ func Login(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"result": true, "userInfo": user, "token": token})
 		return
 	}
-	c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "Wrong Password"})
+	c.JSON(http.StatusBadRequest, gin.H{"result": false, "errStr": "The Account Does Not Exist or The Password Is Incorrect"})
 }

@@ -2,6 +2,8 @@ _basic*
 
 application/ccp/connection-org*
 
+application/wallet/*
+
 basic-network-3org-raft/system-genesis-block/genesis.block
 
 basic-network-3org-raft/channel-artifacts
